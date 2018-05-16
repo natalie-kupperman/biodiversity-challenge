@@ -10,14 +10,12 @@ function updateMetaData(data) {
         h6Text = document.createTextNode(`${key}: ${data[key]}`);
         h6tag.append(h6Text);
         panel.appendChild(h6tag);
-    }
-    console.log(data);
-}
+    }; 
+};
 function buildCharts(sampleData, otuData) {
     // Loop through sample data and find the OTU Taxonomic Name
     var labels = sampleData[0]['otu_ids'].map(function(item) {
         return otuData[item]
-        console.log(outData);
     });
     // Build Bubble Chart
     var bubbleLayout = {
@@ -33,7 +31,7 @@ function buildCharts(sampleData, otuData) {
         marker: {
             size: sampleData[0]['sample_values'],
             color: sampleData[0]['otu_ids'],
-            colorscale: "Earth",
+            colorscale: "YIGnBu",
         }
     }];
     var bubble = document.getElementById('bubbleplot');
@@ -45,11 +43,17 @@ function buildCharts(sampleData, otuData) {
         labels: sampleData[0]['otu_ids'].slice(0, 10),
         hovertext: labels.slice(0, 10),
         hoverinfo: 'hovertext',
-        type: 'pie'
+        type: 'pie',
+        marker: {
+            colors: ['#add8e6','#b7dde5','#c0e1e5','#cae5e4','#d3e9e4',
+            '#dceee3','#e4f2e2','#eef7e1','#f6fae1','#ffffe0']
+        }
     }];
+
     var pieLayout = {
         margin: { t: 0, l: 0 }
     };
+
     var pie = document.getElementById('pie');
     Plotly.plot(pie, pieData, pieLayout);
 };
@@ -63,6 +67,7 @@ function updateCharts(sampleData, otuData) {
     });
     // Update the Bubble Chart with the new data
     var bubble = document.getElementById('bubble');
+
     Plotly.restyle(bubble, 'x', [otuIds]);
     Plotly.restyle(bubble, 'y', [sampleValues]);
     Plotly.restyle(bubble, 'text', [labels]);
@@ -79,23 +84,30 @@ function updateCharts(sampleData, otuData) {
         hoverinfo: 'hovertext',
         type: 'pie'
     };
+    
     Plotly.restyle(pie, pieUpdate);
-}
+};
+
 function getData(sample, callback) {
     // Use a request to grab the json data needed for all charts
     Plotly.d3.json(`/samples/${sample}`, function(error, sampleData) {
         if (error) return console.warn(error);
+
         Plotly.d3.json('/otu', function(error, otuData) {
             if (error) return console.warn(error);
             callback(sampleData, otuData);
         });
     });
+
     Plotly.d3.json(`/metadata/${sample}`, function(error, metaData) {
         if (error) return console.warn(error);
+
         updateMetaData(metaData);
-    })
+    });
+
     buildGauge(sample);
-}
+};
+
 function getOptions() {
     // Grab a reference to the dropdown select element
     var selDataset = document.getElementById('selDataset');
@@ -108,48 +120,44 @@ function getOptions() {
             selDataset.appendChild(currentOption);
         }
         getData(sampleNames[0], buildCharts);
-    })
-}
+    });
+};
+
 function optionChanged(newSample) {
     // Fetch new data each time a new sample is selected
     getData(newSample, updateCharts);
-}
+};
+
 function init() {
     getOptions();
-}
+};
+
 // Initialize the dashboard
 init();
-   
+
 function piePlot(value){
     var url=("/metadata/"+value)
     console.log(url)
-  
     Plotly.d3.json(url, function(error, response) {
-        console.log(response);
-
         var trace1 = {
             type: "pie",
             values: response.map(data => data.sample_values),
             labels: response.map(data => data.otu_ids)
         }
-  
         var data = [trace1];
-
         var layout = {
           height: 400,
           width: 500
         };
     });
-
     return Plotly.newPlot('pie', data, layout);
   };
-
-
+   
 function buildGauge(sample) {
     Plotly.d3.json(`/wfreq/${sample}`, function(error, wfreq) {
         if (error) return console.warn(error);
         // enter wash frequency 
-        var level = wfreq*20
+        var level = wfreq*20;
 
         // Trig to calc meter point
         var degrees = 180 - level,
@@ -167,7 +175,7 @@ function buildGauge(sample) {
         var path = mainPath.concat(pathX,space,pathY,pathEnd);
         var data = [{ type: 'scatter',
         x: [0], y:[0],
-            marker: {size: 28, color:'850000'},
+            marker: {size: 12, color:'850000'},
             showlegend: false,
             name: 'Freq',
             text: level,
